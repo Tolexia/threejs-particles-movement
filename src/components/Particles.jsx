@@ -19,7 +19,6 @@ export default function Particles({ model }) {
     flowFieldFrequency: { value: 0.5, min: 0, max: 1, step: 0.001 }
   })
 
-  console.log(pointer)
 
   // Create constant uniforms object
   const uniforms = useMemo(() => ({
@@ -36,9 +35,10 @@ export default function Particles({ model }) {
 
   // GPGPU Setup
   const gpgpu = useMemo(() => {
-    if (!model) return null
+    // if (!model) return null
 
-    const baseGeometry = model.children[0].geometry
+    // const baseGeometry = model.children[0].geometry
+    const baseGeometry = new THREE.SphereGeometry(1, 32, 32)
     const count = baseGeometry.attributes.position.count
     const gpgpuSize = Math.ceil(Math.sqrt(count))
     
@@ -74,7 +74,8 @@ export default function Particles({ model }) {
       count,
       gpgpuSize
     }
-  }, [model, gl])
+// }, [model, gl])
+  }, [gl]) // Retiré model de la dépendance car nous utilisons une sphère
 
   // Update uniforms when controls change
   useEffect(() => {
@@ -84,7 +85,7 @@ export default function Particles({ model }) {
     gpgpu.particlesVariable.material.uniforms.uFlowFieldInfluence.value = flowFieldInfluence
     gpgpu.particlesVariable.material.uniforms.uFlowFieldStrength.value = flowFieldStrength
     gpgpu.particlesVariable.material.uniforms.uFlowFieldFrequency.value = flowFieldFrequency
-  }, [gpgpu, flowFieldInfluence, flowFieldStrength, flowFieldFrequency])
+  }, [gpgpu, speed, flowFieldInfluence, flowFieldStrength, flowFieldFrequency])
 
   // Particles geometry setup
   const geometry = useMemo(() => {
@@ -92,23 +93,31 @@ export default function Particles({ model }) {
 
     const particlesUvArray = new Float32Array(gpgpu.count * 2)
     const sizesArray = new Float32Array(gpgpu.count)
+    const colorsArray = new Float32Array(gpgpu.count * 3)
 
     for(let y = 0; y < gpgpu.gpgpuSize; y++) {
       for(let x = 0; x < gpgpu.gpgpuSize; x++) {
         const i = (y * gpgpu.gpgpuSize + x)
         const i2 = i * 2
+        const i3 = i * 3
 
         particlesUvArray[i2 + 0] = (x + 0.5) / gpgpu.gpgpuSize
         particlesUvArray[i2 + 1] = (y + 0.5) / gpgpu.gpgpuSize
 
         sizesArray[i] = Math.random()
+
+        // Ajouter des couleurs aléatoires pour la sphère
+        colorsArray[i3 + 0] = Math.random()
+        colorsArray[i3 + 1] = Math.random()
+        colorsArray[i3 + 2] = Math.random()
       }
     }
 
     const geometry = new THREE.BufferGeometry()
     geometry.setDrawRange(0, gpgpu.count)
     geometry.setAttribute('aParticlesUv', new THREE.BufferAttribute(particlesUvArray, 2))
-    geometry.setAttribute('aColor', gpgpu.baseGeometry.attributes.color)
+    // geometry.setAttribute('aColor', gpgpu.baseGeometry.attributes.color)
+    geometry.setAttribute('aColor', new THREE.BufferAttribute(colorsArray, 3))
     geometry.setAttribute('aSize', new THREE.BufferAttribute(sizesArray, 1))
 
     return geometry
