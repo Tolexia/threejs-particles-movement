@@ -57,6 +57,8 @@ export default function Particles({ model }) {
     const particlesVariable = computation.addVariable('uParticles', gpgpuParticlesShader, baseParticlesTexture)
     computation.setVariableDependencies(particlesVariable, [ particlesVariable ])
 
+    particlesVariable.material.uniforms.uResolution= { value: new THREE.Vector2(size.width * viewport.dpr, size.height * viewport.dpr) }
+    particlesVariable.material.uniforms.uMouse = { value: pointer }
     particlesVariable.material.uniforms.uSpeed = { value: speed }
     particlesVariable.material.uniforms.uTime = { value: 0 }
     particlesVariable.material.uniforms.uDeltaTime = { value: 0 }
@@ -77,14 +79,36 @@ export default function Particles({ model }) {
 // }, [model, gl])
   }, [gl]) // Retiré model de la dépendance car nous utilisons une sphère
 
+  let pointActive = false
+  const pointerEnter = () => {
+    pointActive = true
+  }
+
+  const resetPointer = () => {
+    pointer.x = 0
+    pointer.y = 0
+    pointActive = false
+  }
+
+  const pointerLeave = () => resetPointer()
+
   // Update uniforms when controls change
   useEffect(() => {
     if (!gpgpu) return
 
+    gpgpu.particlesVariable.material.uniforms.uMouse.value = pointer
     gpgpu.particlesVariable.material.uniforms.uSpeed.value = speed
     gpgpu.particlesVariable.material.uniforms.uFlowFieldInfluence.value = flowFieldInfluence
     gpgpu.particlesVariable.material.uniforms.uFlowFieldStrength.value = flowFieldStrength
     gpgpu.particlesVariable.material.uniforms.uFlowFieldFrequency.value = flowFieldFrequency
+
+    document.body.addEventListener('pointerout', pointerLeave)
+    document.body.addEventListener('pointerenter', pointerEnter)
+
+    return () => {
+      document.body.removeEventListener('pointerout', pointerLeave)
+      document.body.removeEventListener('pointerenter', pointerEnter)
+    }
   }, [gpgpu, speed, flowFieldInfluence, flowFieldStrength, flowFieldFrequency])
 
   // Particles geometry setup

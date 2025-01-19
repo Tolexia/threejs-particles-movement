@@ -7,6 +7,8 @@ uniform sampler2D uBase;
 uniform float uFlowFieldInfluence;
 uniform float uFlowFieldStrength;
 uniform float uFlowFieldFrequency;
+uniform vec2 uMouse;
+uniform vec2 uResolution;
 
 ${simplexNoise4d}
 
@@ -29,20 +31,35 @@ void main()
     {
         // Strength
         float strength = simplexNoise4d(vec4(base.xyz * 0.2, time + 1.0));
-        float influence = (uFlowFieldInfluence - 0.5) * (- 2.0);
+        // float influence = (uFlowFieldInfluence - 0.5) * (- 2.0);
+        float influence = (uFlowFieldInfluence) ;
         strength = smoothstep(influence, 1.0, strength);
 
-        // Flow field
+        // Direction vers la souris
+        vec3 mouseDirection = vec3(uMouse.x * uResolution.x, uMouse.y * uResolution.y, 0.0) - particle.xyz;
+        mouseDirection = normalize(mouseDirection);
+
+        // Flow field original
         vec3 flowField = vec3(
             simplexNoise4d(vec4(particle.xyz * uFlowFieldFrequency + 0.0, time)),
             simplexNoise4d(vec4(particle.xyz * uFlowFieldFrequency + 1.0, time)),
             simplexNoise4d(vec4(particle.xyz * uFlowFieldFrequency + 2.0, time))
         );
         flowField = normalize(flowField);
-        particle.xyz += flowField * uDeltaTime * strength * uFlowFieldStrength;
+
+        // Mélange entre le flowfield et la direction de la souris
+        vec3 finalDirection = mix(flowField, mouseDirection, 0.65);
+        finalDirection = normalize(finalDirection);
+
+        if(uMouse != vec2(0.0))
+        {
+            particle.xyz += finalDirection * uDeltaTime * uFlowFieldStrength;
+        }
+        
+       
 
         // Decay
-        particle.a += uDeltaTime * 0.3;
+        particle.a += uDeltaTime * 0.2;
     }
     
     gl_FragColor = particle;
