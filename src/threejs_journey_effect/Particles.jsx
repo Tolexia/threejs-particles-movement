@@ -12,13 +12,14 @@ export default function Particles({ model }) {
   const particlesRef = useRef()
 
   const {particleSize, flowFieldInfluence, flowFieldStrength, flowFieldFrequency, speed} = useControls('Particles', {
-    speed: { value: 0.05, min: 0, max: 1, step: 0.001 },
+    speed: { value: 0.2, min: 0, max: 1, step: 0.001 },
     particleSize: { value: 0.05, min: 0, max: 0.5, step: 0.001 },
     flowFieldInfluence: { value: 0.5, min: 0, max: 1, step: 0.001 },
-    flowFieldStrength: { value: 4, min: 0, max: 10, step: 0.001 },
+    flowFieldStrength: { value: 2, min: 0, max: 10, step: 0.001 },
     flowFieldFrequency: { value: 0.5, min: 0, max: 1, step: 0.001 }
   })
 
+  console.log(pointer)
 
   // Create constant uniforms object
   const uniforms = useMemo(() => ({
@@ -35,10 +36,9 @@ export default function Particles({ model }) {
 
   // GPGPU Setup
   const gpgpu = useMemo(() => {
-    // if (!model) return null
+    if (!model) return null
 
-    // const baseGeometry = model.children[0].geometry
-    const baseGeometry = new THREE.SphereGeometry(1, 32, 32)
+    const baseGeometry = model.children[0].geometry
     const count = baseGeometry.attributes.position.count
     const gpgpuSize = Math.ceil(Math.sqrt(count))
     
@@ -57,8 +57,6 @@ export default function Particles({ model }) {
     const particlesVariable = computation.addVariable('uParticles', gpgpuParticlesShader, baseParticlesTexture)
     computation.setVariableDependencies(particlesVariable, [ particlesVariable ])
 
-    particlesVariable.material.uniforms.uResolution= { value: new THREE.Vector2(size.width * viewport.dpr, size.height * viewport.dpr) }
-    particlesVariable.material.uniforms.uMouse = { value: pointer }
     particlesVariable.material.uniforms.uSpeed = { value: speed }
     particlesVariable.material.uniforms.uTime = { value: 0 }
     particlesVariable.material.uniforms.uDeltaTime = { value: 0 }
@@ -66,10 +64,6 @@ export default function Particles({ model }) {
     particlesVariable.material.uniforms.uFlowFieldInfluence = { value: flowFieldInfluence }
     particlesVariable.material.uniforms.uFlowFieldStrength = { value: flowFieldStrength }
     particlesVariable.material.uniforms.uFlowFieldFrequency = { value: flowFieldFrequency }
-
-    particlesVariable.material.uniforms.uColorA = { value: new THREE.Color("#ff6030") }
-    particlesVariable.material.uniforms.uColorB = { value: new THREE.Color("#1b3984") }
-
 
     computation.init()
 
@@ -80,40 +74,17 @@ export default function Particles({ model }) {
       count,
       gpgpuSize
     }
-// }, [model, gl])
-  }, [gl]) // Retiré model de la dépendance car nous utilisons une sphère
-
-  let pointActive = useRef(false)
-  const pointerEnter = () => {
-    pointActive.current = true
-  }
-
-  const resetPointer = () => {
-    pointer.x = 0
-    pointer.y = 0
-    pointActive.current = false
-  }
-
-  const pointerLeave = () => resetPointer()
+  }, [model, gl])
 
   // Update uniforms when controls change
   useEffect(() => {
     if (!gpgpu) return
 
-    gpgpu.particlesVariable.material.uniforms.uMouse.value = pointer
     gpgpu.particlesVariable.material.uniforms.uSpeed.value = speed
     gpgpu.particlesVariable.material.uniforms.uFlowFieldInfluence.value = flowFieldInfluence
     gpgpu.particlesVariable.material.uniforms.uFlowFieldStrength.value = flowFieldStrength
     gpgpu.particlesVariable.material.uniforms.uFlowFieldFrequency.value = flowFieldFrequency
-
-    document.body.addEventListener('pointerup', pointerLeave)
-    document.body.addEventListener('pointerdown', pointerEnter)
-
-    return () => {
-      document.body.removeEventListener('pointerup', pointerLeave)
-      document.body.removeEventListener('pointerdown', pointerEnter)
-    }
-  }, [gpgpu, speed, flowFieldInfluence, flowFieldStrength, flowFieldFrequency])
+  }, [gpgpu, flowFieldInfluence, flowFieldStrength, flowFieldFrequency])
 
   // Particles geometry setup
   const geometry = useMemo(() => {
@@ -121,32 +92,23 @@ export default function Particles({ model }) {
 
     const particlesUvArray = new Float32Array(gpgpu.count * 2)
     const sizesArray = new Float32Array(gpgpu.count)
-    const colorsArray = new Float32Array(gpgpu.count * 3)
 
     for(let y = 0; y < gpgpu.gpgpuSize; y++) {
       for(let x = 0; x < gpgpu.gpgpuSize; x++) {
         const i = (y * gpgpu.gpgpuSize + x)
         const i2 = i * 2
-        const i3 = i * 3
 
         particlesUvArray[i2 + 0] = (x + 0.5) / gpgpu.gpgpuSize
         particlesUvArray[i2 + 1] = (y + 0.5) / gpgpu.gpgpuSize
 
-        // sizesArray[i] = Math.random()
-        sizesArray[i] = 0.6
-
-        // Ajouter des couleurs aléatoires pour la sphère
-        colorsArray[i3 + 0] = Math.random()
-        colorsArray[i3 + 1] = Math.random()
-        colorsArray[i3 + 2] = Math.random()
+        sizesArray[i] = Math.random()
       }
     }
 
     const geometry = new THREE.BufferGeometry()
     geometry.setDrawRange(0, gpgpu.count)
     geometry.setAttribute('aParticlesUv', new THREE.BufferAttribute(particlesUvArray, 2))
-    // geometry.setAttribute('aColor', gpgpu.baseGeometry.attributes.color)
-    geometry.setAttribute('aColor', new THREE.BufferAttribute(colorsArray, 3))
+    geometry.setAttribute('aColor', gpgpu.baseGeometry.attributes.color)
     geometry.setAttribute('aSize', new THREE.BufferAttribute(sizesArray, 1))
 
     return geometry
@@ -154,10 +116,6 @@ export default function Particles({ model }) {
 
   useFrame((state, delta) => {
     if (!gpgpu || !particlesRef.current) return
-
-    if(!pointActive.current) {
-      resetPointer()
-    }
 
     // Update GPGPU
     gpgpu.particlesVariable.material.uniforms.uTime.value = state.clock.elapsedTime
