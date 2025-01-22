@@ -13,10 +13,10 @@ export default function Particles({ model }) {
 
   const {particleSize, flowFieldInfluence, flowFieldStrength, flowFieldFrequency, speed} = useControls('Particles', {
     speed: { value: 0.05, min: 0, max: 1, step: 0.001 },
-    particleSize: { value: 0.05, min: 0, max: 0.5, step: 0.001 },
-    flowFieldInfluence: { value: 0.5, min: 0, max: 1, step: 0.001 },
-    flowFieldStrength: { value: 4, min: 0, max: 10, step: 0.001 },
-    flowFieldFrequency: { value: 0.5, min: 0, max: 1, step: 0.001 }
+    particleSize: { value: 0.01, min: 0, max: 0.5, step: 0.001 },
+    flowFieldInfluence: { value: 0.9, min: 0, max: 1, step: 0.001 },
+    flowFieldStrength: { value: 3, min: 0, max: 10, step: 0.001 },
+    flowFieldFrequency: { value: 0.9, min: 0, max: 1, step: 0.001 }
   })
 
 
@@ -35,10 +35,8 @@ export default function Particles({ model }) {
 
   // GPGPU Setup
   const gpgpu = useMemo(() => {
-    // if (!model) return null
 
-    // const baseGeometry = model.children[0].geometry
-    const baseGeometry = new THREE.SphereGeometry(1, 32, 32)
+    const baseGeometry = new THREE.SphereGeometry(2, 256, 256)
     const count = baseGeometry.attributes.position.count
     const gpgpuSize = Math.ceil(Math.sqrt(count))
     
@@ -48,6 +46,7 @@ export default function Particles({ model }) {
     for(let i = 0; i < count; i++) {
       const i3 = i * 3
       const i4 = i * 4
+
       baseParticlesTexture.image.data[i4 + 0] = baseGeometry.attributes.position.array[i3 + 0]
       baseParticlesTexture.image.data[i4 + 1] = baseGeometry.attributes.position.array[i3 + 1]
       baseParticlesTexture.image.data[i4 + 2] = baseGeometry.attributes.position.array[i3 + 2]
@@ -66,9 +65,6 @@ export default function Particles({ model }) {
     particlesVariable.material.uniforms.uFlowFieldInfluence = { value: flowFieldInfluence }
     particlesVariable.material.uniforms.uFlowFieldStrength = { value: flowFieldStrength }
     particlesVariable.material.uniforms.uFlowFieldFrequency = { value: flowFieldFrequency }
-
-    particlesVariable.material.uniforms.uColorA = { value: new THREE.Color("#ff6030") }
-    particlesVariable.material.uniforms.uColorB = { value: new THREE.Color("#1b3984") }
 
 
     computation.init()

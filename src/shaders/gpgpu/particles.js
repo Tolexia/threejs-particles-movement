@@ -24,12 +24,15 @@ void main()
 
     // Strength
     float strength = simplexNoise4d(vec4(base.xyz, time + 1.0));
-    float influence = (uFlowFieldInfluence - 0.5) * (- 2.0);
+    float influence = (uFlowFieldInfluence - 0.5) * (- 1.0);
     strength = smoothstep(influence, 1.0, strength);
 
     // Direction vers la souris
     vec3 mouseDirection = vec3(uMouse.x * uResolution.x, uMouse.y * uResolution.y, 0.0) - particle.xyz;
     mouseDirection = normalize(mouseDirection);
+
+    vec3 directionFromZero = particle.xyz - vec3(0.0, 0.0, 0.0) ;
+    directionFromZero = normalize(directionFromZero);
 
     vec3 directionToBase = base.xyz - particle.xyz;
     directionToBase = normalize(directionToBase);
@@ -42,14 +45,20 @@ void main()
     );
     flowField = normalize(flowField);
 
-    vec3 targetDirection = mouseDirection;
+    // vec3 targetDirection = mouseDirection;
+    vec3 targetDirection = directionFromZero;
     
     if(uMouse == vec2(0.0)) {
         targetDirection = directionToBase;
     }
 
+    float directionInfluence = 0.3;
+    if(uMouse == vec2(0.0)) {
+        directionInfluence = 0.6;
+    }   
+
     // Mélange entre le flowfield et la direction de la souris
-    vec3 finalDirection = mix(flowField, targetDirection, 0.75);
+    vec3 finalDirection = mix(flowField, targetDirection, directionInfluence);
     finalDirection = normalize(finalDirection);
 
     if(uMouse != vec2(0.0))
@@ -61,8 +70,8 @@ void main()
     {
         if(length(particle.xyz - base.xyz) > 0.01)
         {
-            particle.xyz += finalDirection * uDeltaTime * uFlowFieldStrength;
-            particle.a = abs(length(base.xyz - particle.xyz)) / 2.;
+            particle.xyz += finalDirection * uDeltaTime * (uFlowFieldStrength * 2.);
+            particle.a = abs(length(base.xyz - particle.xyz)) * 150. ;
         }
         else{
             particle.a = 0.0;

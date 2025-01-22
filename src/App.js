@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js'
 import Particles from './components/Particles'
+import { Leva } from 'leva'
 
 export default function App() {
 //   const [model, setModel] = useState(null)
@@ -32,6 +33,9 @@ export default function App() {
             model={model}
         />} */}
         <Particles />
+        <Leva
+        hidden // default = false, when true the GUI is hidden
+      />
     </>
   )
 }
