@@ -7,10 +7,11 @@ import particlesFragmentShader from '../shaders/particles/fragment.js'
 import gpgpuParticlesShader from '../shaders/gpgpu/particles.js'
 import { useControls } from 'leva'
 
-export default function Particles({ light }) {
+export default function Particles({ lightPosition, lightColor }) {
   const { gl, size, viewport, pointer } = useThree()
   const particlesRef = useRef()
   const pointer2 = useRef(new THREE.Vector2(0, 0))
+  const materialRef = useRef()
 
   const {particleSize, flowFieldInfluence, flowFieldStrength, flowFieldFrequency, speed, lightIntensity, lightSpecularPower} = useControls('Particles', {
     speed: { value: 0.05, min: 0, max: 1, step: 0.001 },
@@ -22,23 +23,26 @@ export default function Particles({ light }) {
     lightSpecularPower: { value: 1., min: 0, max: 100, step: 0.001 }
   })
 
-
   // Create constant uniforms object
   const uniforms = useMemo(() => ({
     uSize: { value: particleSize },
     uResolution: { value: new THREE.Vector2(size.width * viewport.dpr, size.height * viewport.dpr) },
     uParticlesTexture: { value: null },
-    uLightPosition: { value: pointer },
-    uLightColor: { value: new THREE.Vector3(1, 1, 1) },
+    uLightPosition: { value: lightPosition.current },
+    uLightColor: { value: lightColor },
     uLightIntensity: { value: lightIntensity },
     uLightSpecularPower: { value: lightSpecularPower }
   }), [size])
 
-  // Update uniforms when controls change
-  useEffect(() => {
-    if (!uniforms) return
-    uniforms.uSize.value = particleSize
-  }, [uniforms, particleSize])
+  // Mise à jour des uniforms en temps réel
+  useFrame(() => {
+    if (materialRef.current && lightPosition.current) {
+      materialRef.current.uniforms.uLightPosition.value = lightPosition.current
+      materialRef.current.uniforms.uLightColor.value = lightColor
+      materialRef.current.uniforms.uLightIntensity.value = lightIntensity
+      materialRef.current.uniforms.uLightSpecularPower.value = lightSpecularPower
+    }
+  })
 
   // GPGPU Setup
   const gpgpu = useMemo(() => {
@@ -184,6 +188,7 @@ export default function Particles({ light }) {
     <points ref={particlesRef}>
       <primitive object={geometry} attach="geometry" />
       <shaderMaterial
+        ref={materialRef}
         vertexShader={particlesVertexShader}
         fragmentShader={particlesFragmentShader}
         uniforms={uniforms}

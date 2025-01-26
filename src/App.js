@@ -1,26 +1,66 @@
 import { OrbitControls, PerspectiveCamera } from '@react-three/drei'
-import { useEffect, useRef, useState } from 'react'
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
-import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import Particles from './components/Particles'
 import { Leva } from 'leva'
+import * as THREE from 'three'
+import { useFrame, useThree } from '@react-three/fiber'
 
 export default function App() {
-
     const pointLight = useRef()
+    const pointMesh = useRef()
+    const lightColor = useMemo(() => new THREE.Vector3(1.0, 0.0, 0.0), []) // Rouge vif
+    const lightPosition = useRef(new THREE.Vector3(-2, -2, 5))
 
-  return (
-    <>
-        <color attach="background" args={["#29191f"]} />
-        <pointLight ref={pointLight} position={[-2, -2, 5]} intensity={1} color={'#ff0000'} />
-        {/* <OrbitControls makeDefault enableDamping 
+    const {pointer, viewport} = useThree()
+
+    useFrame(() => {
+        if(!lightPosition.current) return
+
+        // Calcul de la nouvelle position
+        const targetPosition = new THREE.Vector3(
+            pointer.x * (viewport.width / 4),
+            pointer.y * (viewport.height / 4),
+            5
+        )
+
+        // Mise à jour fluide de la position
+        lightPosition.current.lerp(targetPosition, 0.1)
+
+        // Mise à jour des références
+        if(pointMesh.current) {
+            pointMesh.current.position.copy(lightPosition.current)
+        }
+        if(pointLight.current) {
+            pointLight.current.position.copy(lightPosition.current)
+        }
+    })
+
+    return (
+        <>
+            <color attach="background" args={["#29191f"]} />
+            <pointLight ref={pointLight} position={lightPosition.current.toArray()} intensity={1} color={lightColor.toArray()} />
+            
+            {/* Sphère émissive */}
+            <mesh ref={pointMesh} position={lightPosition.current.toArray()}>
+                <sphereGeometry args={[0.2, 16, 16]} />
+                <meshBasicMaterial
+                    color={new THREE.Color(
+                        lightColor.x * 3.0,
+                        lightColor.y * 3.0,
+                        lightColor.z * 3.0
+                    )}
+                    toneMapped={false}
+                />
+            </mesh>
+
+            {/* <OrbitControls makeDefault enableDamping 
       autoRotate autoRotateSpeed={0.5} 
       zoomSpeed={0.5} /> */}
-        <PerspectiveCamera makeDefault position={[0,0, 11]} fov={35} near={0.1} far={100} />
-        <Particles light={pointLight} />
-        {/* <Leva
+            <PerspectiveCamera makeDefault position={[0,0, 11]} fov={35} near={0.1} far={100} />
+            <Particles lightPosition={lightPosition} lightColor={lightColor} />
+            <Leva
         hidden // default = false, when true the GUI is hidden
-      /> */}
-    </>
-  )
+      />
+        </>
+    )
 }
