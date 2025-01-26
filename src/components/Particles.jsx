@@ -7,16 +7,19 @@ import particlesFragmentShader from '../shaders/particles/fragment.js'
 import gpgpuParticlesShader from '../shaders/gpgpu/particles.js'
 import { useControls } from 'leva'
 
-export default function Particles({ model }) {
+export default function Particles({ light }) {
   const { gl, size, viewport, pointer } = useThree()
   const particlesRef = useRef()
+  const pointer2 = useRef(new THREE.Vector2(0, 0))
 
-  const {particleSize, flowFieldInfluence, flowFieldStrength, flowFieldFrequency, speed} = useControls('Particles', {
+  const {particleSize, flowFieldInfluence, flowFieldStrength, flowFieldFrequency, speed, lightIntensity, lightSpecularPower} = useControls('Particles', {
     speed: { value: 0.05, min: 0, max: 1, step: 0.001 },
     particleSize: { value: 0.01, min: 0, max: 0.5, step: 0.001 },
     flowFieldInfluence: { value: 0.9, min: 0, max: 1, step: 0.001 },
     flowFieldStrength: { value: 3, min: 0, max: 10, step: 0.001 },
-    flowFieldFrequency: { value: 0.9, min: 0, max: 1, step: 0.001 }
+    flowFieldFrequency: { value: 0.9, min: 0, max: 1, step: 0.001 },
+    lightIntensity: { value: 1, min: 0, max: 100, step: 0.001 },
+    lightSpecularPower: { value: 1., min: 0, max: 100, step: 0.001 }
   })
 
 
@@ -24,7 +27,11 @@ export default function Particles({ model }) {
   const uniforms = useMemo(() => ({
     uSize: { value: particleSize },
     uResolution: { value: new THREE.Vector2(size.width * viewport.dpr, size.height * viewport.dpr) },
-    uParticlesTexture: { value: null }
+    uParticlesTexture: { value: null },
+    uLightPosition: { value: pointer },
+    uLightColor: { value: new THREE.Vector3(1, 1, 1) },
+    uLightIntensity: { value: lightIntensity },
+    uLightSpecularPower: { value: lightSpecularPower }
   }), [size])
 
   // Update uniforms when controls change
@@ -57,7 +64,7 @@ export default function Particles({ model }) {
     computation.setVariableDependencies(particlesVariable, [ particlesVariable ])
 
     particlesVariable.material.uniforms.uResolution= { value: new THREE.Vector2(size.width * viewport.dpr, size.height * viewport.dpr) }
-    particlesVariable.material.uniforms.uMouse = { value: pointer }
+    particlesVariable.material.uniforms.uMouse = { value: pointer2.current }
     particlesVariable.material.uniforms.uSpeed = { value: speed }
     particlesVariable.material.uniforms.uTime = { value: 0 }
     particlesVariable.material.uniforms.uDeltaTime = { value: 0 }
@@ -84,9 +91,9 @@ export default function Particles({ model }) {
     pointActive.current = true
   }
 
+
   const resetPointer = () => {
-    pointer.x = 0
-    pointer.y = 0
+    pointer2.current.set(0, 0)
     pointActive.current = false
   }
 
@@ -96,7 +103,7 @@ export default function Particles({ model }) {
   useEffect(() => {
     if (!gpgpu) return
 
-    gpgpu.particlesVariable.material.uniforms.uMouse.value = pointer
+    // gpgpu.particlesVariable.material.uniforms.uMouse.value = pointer2.current
     gpgpu.particlesVariable.material.uniforms.uSpeed.value = speed
     gpgpu.particlesVariable.material.uniforms.uFlowFieldInfluence.value = flowFieldInfluence
     gpgpu.particlesVariable.material.uniforms.uFlowFieldStrength.value = flowFieldStrength
@@ -151,8 +158,14 @@ export default function Particles({ model }) {
   useFrame((state, delta) => {
     if (!gpgpu || !particlesRef.current) return
 
-    if(!pointActive.current) {
-      resetPointer()
+
+    if(pointer2.current) {
+        if(!pointActive.current) {
+            resetPointer()
+        }else{
+            pointer2.current.copy(pointer)
+        }
+      gpgpu.particlesVariable.material.uniforms.uMouse.value = pointer2.current
     }
 
     // Update GPGPU
