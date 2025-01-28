@@ -8,7 +8,7 @@ import { useFrame, useThree } from '@react-three/fiber'
 export default function App() {
     const pointLight = useRef()
     const pointMesh = useRef()
-    const lightColor = useMemo(() => new THREE.Vector3(1.0, 0.0, 0.0), []) // Rouge vif
+    const lightColor = useMemo(() => new THREE.Vector3(1.0, 0.0, 0.0), []) // Bright red
     const lightPosition = useRef(new THREE.Vector3(-2, -2, 5))
 
     const {pointer, viewport} = useThree()
@@ -16,17 +16,17 @@ export default function App() {
     useFrame(() => {
         if(!lightPosition.current) return
 
-        // Calcul de la nouvelle position
+        // Calculate new position
         const targetPosition = new THREE.Vector3(
             pointer.x * (viewport.width / 4),
             pointer.y * (viewport.height / 4),
             5
         )
 
-        // Mise à jour fluide de la position
-        lightPosition.current.lerp(targetPosition, 0.1)
+        // Smooth position update
+        lightPosition.current.lerp(targetPosition, 0.2)
 
-        // Mise à jour des références
+        // Update references
         if(pointMesh.current) {
             pointMesh.current.position.copy(lightPosition.current)
         }
@@ -40,7 +40,7 @@ export default function App() {
             <color attach="background" args={["#29191f"]} />
             <pointLight ref={pointLight} position={lightPosition.current.toArray()} intensity={3} color={lightColor.toArray()} />
             
-            {/* Sphère émissive */}
+            {/* Emissive sphere */}
             <mesh ref={pointMesh} position={lightPosition.current.toArray()}>
                 <sphereGeometry args={[0.2, 16, 16]} />
                 <meshBasicMaterial

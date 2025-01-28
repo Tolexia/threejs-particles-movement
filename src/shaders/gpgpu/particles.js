@@ -27,7 +27,7 @@ void main()
     float influence = (uFlowFieldInfluence - 0.5) * (- 1.0);
     strength = smoothstep(influence, 1.0, strength);
 
-    // Direction vers la souris
+    // Direction towards mouse
     vec3 mouseDirection = vec3(uMouse.x * uResolution.x, uMouse.y * uResolution.y, 0.0) - particle.xyz;
     mouseDirection = normalize(mouseDirection);
 
@@ -37,7 +37,7 @@ void main()
     vec3 directionToBase = base.xyz - particle.xyz;
     directionToBase = normalize(directionToBase);
 
-    // Flow field original
+    // Original flow field
     vec3 flowField = vec3(
         simplexNoise4d(vec4(particle.xyz * uFlowFieldFrequency + 0.0, time)),
         simplexNoise4d(vec4(particle.xyz * uFlowFieldFrequency + 1.0, time)),
@@ -57,7 +57,7 @@ void main()
         directionInfluence = 0.6;
     }   
 
-    // Mélange entre le flowfield et la direction de la souris
+    // Mix between flow field and mouse direction
     vec3 finalDirection = mix(flowField, targetDirection, directionInfluence);
     finalDirection = normalize(finalDirection);
 

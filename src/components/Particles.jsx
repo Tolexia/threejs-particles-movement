@@ -23,7 +23,7 @@ export default function Particles({ lightPosition, lightColor }) {
     lightSpecularPower: { value: 1., min: 0, max: 100, step: 0.001 }
   })
 
-  // Create constant uniforms object
+  // Uniforms for final particles rendering
   const uniforms = useMemo(() => ({
     uSize: { value: particleSize },
     uResolution: { value: new THREE.Vector2(size.width * viewport.dpr, size.height * viewport.dpr) },
@@ -34,15 +34,6 @@ export default function Particles({ lightPosition, lightColor }) {
     uLightSpecularPower: { value: lightSpecularPower }
   }), [size])
 
-  // Mise à jour des uniforms en temps réel
-  useFrame(() => {
-    if (materialRef.current && lightPosition.current) {
-      materialRef.current.uniforms.uLightPosition.value = lightPosition.current
-      materialRef.current.uniforms.uLightColor.value = lightColor
-      materialRef.current.uniforms.uLightIntensity.value = lightIntensity
-      materialRef.current.uniforms.uLightSpecularPower.value = lightSpecularPower
-    }
-  })
 
   // GPGPU Setup
   const gpgpu = useMemo(() => {
@@ -87,8 +78,7 @@ export default function Particles({ lightPosition, lightColor }) {
       count,
       gpgpuSize
     }
-// }, [model, gl])
-  }, [gl]) // Retiré model de la dépendance car nous utilisons une sphère
+  }, [gl])
 
   let pointActive = useRef(false)
   const pointerEnter = () => {
@@ -105,13 +95,10 @@ export default function Particles({ lightPosition, lightColor }) {
 
   // Update uniforms when controls change
   useEffect(() => {
-    if (!gpgpu) return
 
-    // gpgpu.particlesVariable.material.uniforms.uMouse.value = pointer2.current
-    gpgpu.particlesVariable.material.uniforms.uSpeed.value = speed
-    gpgpu.particlesVariable.material.uniforms.uFlowFieldInfluence.value = flowFieldInfluence
-    gpgpu.particlesVariable.material.uniforms.uFlowFieldStrength.value = flowFieldStrength
-    gpgpu.particlesVariable.material.uniforms.uFlowFieldFrequency.value = flowFieldFrequency
+    if(lightPosition.current){
+        uniforms.uLightPosition.value = lightPosition.current
+    }
 
     document.body.addEventListener('pointerup', pointerLeave)
     document.body.addEventListener('pointerdown', pointerEnter)
@@ -120,7 +107,7 @@ export default function Particles({ lightPosition, lightColor }) {
       document.body.removeEventListener('pointerup', pointerLeave)
       document.body.removeEventListener('pointerdown', pointerEnter)
     }
-  }, [gpgpu, speed, flowFieldInfluence, flowFieldStrength, flowFieldFrequency])
+  }, [lightPosition.current])
 
   // Particles geometry setup
   const geometry = useMemo(() => {
@@ -142,7 +129,7 @@ export default function Particles({ lightPosition, lightColor }) {
         // sizesArray[i] = Math.random()
         sizesArray[i] = 0.6
 
-        // Ajouter des couleurs aléatoires pour la sphère
+        // Random colors for the sphere
         colorsArray[i3 + 0] = Math.random()
         colorsArray[i3 + 1] = Math.random()
         colorsArray[i3 + 2] = Math.random()
@@ -182,7 +169,6 @@ export default function Particles({ lightPosition, lightColor }) {
     uniforms.uParticlesTexture.value = gpgpu.computation.getCurrentRenderTarget(gpgpu.particlesVariable).texture
   })
 
-  if (!geometry) return null
 
   return (
     <points ref={particlesRef}>
