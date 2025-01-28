@@ -1,4 +1,4 @@
-# threejs image particles transition
+# threejs particles noise interaction
  
 - import project
 - npm install
