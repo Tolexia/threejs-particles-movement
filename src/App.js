@@ -38,7 +38,7 @@ export default function App() {
     return (
         <>
             <color attach="background" args={["#29191f"]} />
-            <pointLight ref={pointLight} position={lightPosition.current.toArray()} intensity={1} color={lightColor.toArray()} />
+            <pointLight ref={pointLight} position={lightPosition.current.toArray()} intensity={3} color={lightColor.toArray()} />
             
             {/* Sphère émissive */}
             <mesh ref={pointMesh} position={lightPosition.current.toArray()}>

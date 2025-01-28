@@ -38,7 +38,7 @@ void main()
         uLightSpecularPower        // Specular power
     );
     
-    vec3 color = vec3(0.3, 0.2, 0.0);
+    vec3 color = vec3(0.6, 0.4, 0.0);
     color *= light;
     
     gl_FragColor = vec4(color, particle.a);

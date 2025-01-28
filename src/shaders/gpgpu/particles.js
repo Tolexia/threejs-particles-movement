@@ -68,12 +68,13 @@ void main()
     }
     else
     {
-        if(length(particle.xyz - base.xyz) > 0.01)
+        if(length(particle.xyz - base.xyz) > 0.1)
         {
             particle.xyz += finalDirection * uDeltaTime * (uFlowFieldStrength * 2.);
             particle.a = abs(length(base.xyz - particle.xyz)) * 150. ;
         }
         else{
+            particle.xyz = base.xyz;
             particle.a = 0.0;
         }
     }
