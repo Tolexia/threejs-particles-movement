@@ -19,8 +19,8 @@ export default function Particles({ lightPosition, lightColor }) {
     flowFieldInfluence: { value: 0.9, min: 0, max: 1, step: 0.001 },
     flowFieldStrength: { value: 3, min: 0, max: 10, step: 0.001 },
     flowFieldFrequency: { value: 0.9, min: 0, max: 1, step: 0.001 },
-    lightIntensity: { value: 1, min: 0, max: 100, step: 0.001 },
-    lightSpecularPower: { value: 1., min: 0, max: 100, step: 0.001 }
+    lightIntensity: { value: 5, min: 0, max: 100, step: 0.001 },
+    lightSpecularPower: { value: 5, min: 0, max: 100, step: 0.001 }
   })
 
   // Uniforms for final particles rendering
