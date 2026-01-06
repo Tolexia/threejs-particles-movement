@@ -1,5 +1,5 @@
-import { OrbitControls, PerspectiveCamera } from '@react-three/drei'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { PerspectiveCamera } from '@react-three/drei'
+import { useMemo, useRef } from 'react'
 import Particles from './components/Particles'
 import { Leva } from 'leva'
 import * as THREE from 'three'
@@ -53,9 +53,6 @@ export default function App() {
                 />
             </mesh>
 
-            {/* <OrbitControls makeDefault enableDamping 
-      autoRotate autoRotateSpeed={0.5} 
-      zoomSpeed={0.5} /> */}
             <PerspectiveCamera makeDefault position={[0,0, 11]} fov={35} near={0.1} far={100} />
             <Particles lightPosition={lightPosition} lightColor={lightColor} />
             <Leva

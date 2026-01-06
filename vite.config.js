@@ -5,9 +5,7 @@ import restart from 'vite-plugin-restart'
 export default defineConfig({
     root: 'src/',
     publicDir: '../public/',
-    optimizeDeps: {
-        exclude: ['js-big-decimal']
-      },
+    base: "./",
     plugins:
     [
         // Restart server on static/public file change

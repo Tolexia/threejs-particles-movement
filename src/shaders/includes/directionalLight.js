@@ -13,5 +13,4 @@ export default  `vec3 directionalLight(vec3 lightColor, float lightIntensity, ve
     specular = pow(specular, specularPower);
 
     return lightColor * lightIntensity * (shading + specular);
-    //  return vec3(specular);
 }`

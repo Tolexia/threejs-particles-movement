@@ -1,4 +1,4 @@
-# threejs particles noise interaction
+# GPGPU particles noise interaction
  
 - import project
 - npm install
